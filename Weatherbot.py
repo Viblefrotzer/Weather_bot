@@ -7,18 +7,13 @@ token = os.environ['TELEGRAM_TOKEN']
 bot = telebot.TeleBot(token)
 IS_HEROKU = os.environ.get('IS_HEROKU', False)
 
-ADMINS = (0, 1, 2)
-
 
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
-    if message.from_user.id in ADMINS:
-        if IS_HEROKU:
-            bot.reply_to(message, 'Привет, я на HEROKU!')
-        else:
-            bot.reply_to(message, 'Привет!')
+    if IS_HEROKU:
+        bot.reply_to(message, 'Привет, я на HEROKU!')
     else:
-        bot.reply_to(message, 'Доступ закрыт')
+        bot.reply_to(message, 'Привет!')
 
 MAIN_STATE = 'main'
 CITY_STATE = 'city'
