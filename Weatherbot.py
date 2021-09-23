@@ -40,7 +40,6 @@ def change_data(key, user_id, value):
 @bot.message_handler(func=lambda message: True)
 def dispatcher(message):
     user_id = str(message.from_user.id)
-    # print(type(user_id))
     state = data['states'].get(user_id, MAIN_STATE)  # если пользователь в первый раз
     if state == MAIN_STATE:
         main_handler(message)
