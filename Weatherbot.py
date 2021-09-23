@@ -2,26 +2,6 @@ import telebot
 from telebot import types
 import json
 import os
-import redis
-
-REDIS_URL = os.environ.get("REDIS_URL")
-dict_db = {}
-
-
-def save(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        redis_db.set(key, value)
-    else:
-        dict_db[key] = value
-
-
-def load(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        return redis_db.get(key)
-    else:
-        return dict_db.get(key)
 
 token = os.environ['TELEGRAM_TOKEN']
 bot = telebot.TeleBot(token)
