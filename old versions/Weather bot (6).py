@@ -1,67 +1,20 @@
 import telebot
 from telebot import types
-import json
-import os
-import redis
+from config import token
 
-REDIS_URL = os.environ.get("REDIS_URL")
-dict_db = {}
-
-
-def save(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        redis_db.set(key, value)
-    else:
-        dict_db[key] = value
-
-
-def load(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        return redis_db.get(key)
-    else:
-        return dict_db.get(key)
-
-token = os.environ['TELEGRAM_TOKEN']
 bot = telebot.TeleBot(token)
+
+states = {}
 
 MAIN_STATE = 'main'
 CITY_STATE = 'city'
 WEATHER_DATE_STATE = 'weather_date_state'
 
-try:
-    data = json.load(open('db/data.json', 'r', encoding='utf-8'))
-except FileNotFoundError:
-    data = {
-        'states': {},
-        MAIN_STATE: {
-
-        },
-        CITY_STATE: {
-
-        },
-        WEATHER_DATE_STATE: {
-            # id: city
-        },
-    }
-
-
-def change_data(key, user_id, value):
-    data[key][user_id] = value
-    json.dump(
-        data,
-        open('db/data.json', 'w', encoding='utf-8'),
-        indent=2,
-        ensure_ascii=False,
-    )
-
 
 @bot.message_handler(func=lambda message: True)
 def dispatcher(message):
-    user_id = str(message.from_user.id)
-    # print(type(user_id))
-    state = data['states'].get(user_id, MAIN_STATE)  # если пользователь в первый раз
+    user_id = message.from_user.id
+    state = states.get(user_id, MAIN_STATE)  # если пользователь в первый раз
     if state == MAIN_STATE:
         main_handler(message)
     elif state == CITY_STATE:
@@ -71,7 +24,7 @@ def dispatcher(message):
 
 
 def main_handler(message):
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
 
     if message.text == '/start':
 
@@ -83,7 +36,7 @@ def main_handler(message):
             'Этот бот умеет показывать погоду',
             reply_markup=markup,
         )
-        change_data('states', user_id, MAIN_STATE)
+        states[user_id] = MAIN_STATE
 
     elif message.text == 'Погода':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -91,25 +44,38 @@ def main_handler(message):
             *[types.KeyboardButton(button) for button in ['мск', 'спб']]
         )
         bot.send_message(user_id, "А какой город? Москва или Спб?", reply_markup=markup)
-        change_data('states', user_id, CITY_STATE)
+        states[user_id] = CITY_STATE
 
     else:
         markup = types.ReplyKeyboardRemove()
         bot.send_message(user_id, 'Я тебя не понял', reply_markup=markup)
 
 
+data = {
+    MAIN_STATE: {
+
+    },
+    CITY_STATE: {
+
+    },
+    WEATHER_DATE_STATE: {
+        # id: city
+    },
+}
+
+
 def city_handler(message):
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
     if message.text.lower() in ['мск', 'спб']:
-        change_data(WEATHER_DATE_STATE, user_id, message.text.lower())
+        data[WEATHER_DATE_STATE][user_id] = message.text.lower()
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(
             *[types.KeyboardButton(button) for button in ['сегодня', 'завтра']]
         )
         bot.send_message(user_id, 'А какая дата? введи "сегодня" или "завтра"', reply_markup=markup)
-        change_data('states', user_id, WEATHER_DATE_STATE)
+        states[user_id] = WEATHER_DATE_STATE
     else:
-        bot.reply_to(message, 'Я тебя не понял')
+        bot.reply_to(message, 'хрю')
 
 
 WEATHER = {
@@ -125,19 +91,20 @@ WEATHER = {
 
 
 def weather_date(message):
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
     city = data[WEATHER_DATE_STATE][user_id]
+
     if message.text == 'сегодня':
         bot.send_message(user_id, WEATHER[city][message.text.lower()])
-        change_data('states', user_id, MAIN_STATE)
+        states[user_id] = MAIN_STATE
 
     elif message.text == 'завтра':
         bot.send_message(user_id, WEATHER[city][message.text.lower()])
-        change_data('states', user_id, MAIN_STATE)
+        states[user_id] = MAIN_STATE
 
     elif message.text.lower() == 'Назад':
         bot.send_message(user_id, 'Вернулся назад')
-        change_data('states', user_id, MAIN_STATE)
+        states[user_id] = MAIN_STATE
 
     else:
         bot.reply_to(message, "Я тебя не понял")

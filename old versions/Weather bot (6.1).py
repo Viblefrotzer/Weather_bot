@@ -1,29 +1,8 @@
 import telebot
 from telebot import types
+from config import token
 import json
-import os
-import redis
 
-REDIS_URL = os.environ.get("REDIS_URL")
-dict_db = {}
-
-
-def save(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        redis_db.set(key, value)
-    else:
-        dict_db[key] = value
-
-
-def load(key, value):
-    if REDIS_URL:
-        redis_db = redis.from_url(REDIS_URL)
-        return redis_db.get(key)
-    else:
-        return dict_db.get(key)
-
-token = os.environ['TELEGRAM_TOKEN']
 bot = telebot.TeleBot(token)
 
 MAIN_STATE = 'main'
@@ -31,7 +10,7 @@ CITY_STATE = 'city'
 WEATHER_DATE_STATE = 'weather_date_state'
 
 try:
-    data = json.load(open('db/data.json', 'r', encoding='utf-8'))
+    data = json.load(open('../db/data.json', 'r', encoding='utf-8'))
 except FileNotFoundError:
     data = {
         'states': {},
@@ -51,7 +30,7 @@ def change_data(key, user_id, value):
     data[key][user_id] = value
     json.dump(
         data,
-        open('db/data.json', 'w', encoding='utf-8'),
+        open('../db/data.json', 'w', encoding='utf-8'),
         indent=2,
         ensure_ascii=False,
     )
@@ -145,3 +124,4 @@ def weather_date(message):
 
 if __name__ == "__main__":
     bot.polling()
+    print('Хрю!')
