@@ -28,9 +28,6 @@ except FileNotFoundError:
         },
     }
 
-# city_name = 'Tver'
-# print(city_name)
-
 
 def change_data(key, user_id, value):
     data[key][user_id] = value
@@ -56,19 +53,15 @@ def dispatcher(message):
 
 def main_handler(message):
     user_id = str(message.from_user.id)
-
     if message.text == '/start':
-
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton('Погода'))
-
         bot.send_message(
             user_id,
             'Этот бот умеет показывать погоду',
             reply_markup=markup,
         )
         change_data('states', user_id, MAIN_STATE)
-
     elif message.text == 'Погода':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(
@@ -76,7 +69,6 @@ def main_handler(message):
         )
         bot.send_message(user_id, "А какой город? Москва или Спб?", reply_markup=markup)
         change_data('states', user_id, CITY_STATE)
-
     else:
         markup = types.ReplyKeyboardRemove()
         bot.send_message(user_id, 'Я тебя не понял', reply_markup=markup)
@@ -96,25 +88,11 @@ def city_handler(message):
         change_data('states', user_id, WEATHER_DATE_STATE)
         if message.text.lower() == 'мск':
             city_name = 'Москва'
-            print(city_name)
         elif message.text.lower() == 'спб':
             city_name = 'Санкт-Петербург'
-            print(city_name)
         return city_name
     else:
         bot.reply_to(message, 'Я тебя не понял')
-
-
-WEATHER = {
-    'спб': {
-        'сегодня': '27',
-        'завтра': '32',
-    },
-    'мск': {
-        'сегодня': '10',
-        'завтра': '6',
-    },
-}
 
 
 def weather_date(message):
@@ -124,14 +102,11 @@ def weather_date(message):
     api_url = "https://api.openweathermap.org/data/2.5/forecast"
     params = {
         'q': city_name,
-        'appid': '8452be5e1d06e33f15820d907ebe6a06',
+        'appid': OWM_API_key,
         'units': 'metric',
         'lang': 'ru'
     }
     if message.text == 'сегодня':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(types.KeyboardButton('Погода'))
-        print(city_name)
         result = requests.get(api_url, params=params)
         data = result.json()
         template = 'Сегодня в городе {} температура {}°, {}.'
@@ -140,9 +115,6 @@ def weather_date(message):
         change_data('states', user_id, MAIN_STATE)
 
     elif message.text == 'завтра':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(types.KeyboardButton('Погода'))
-        print(city_name)
         result = requests.get(api_url, params=params)
         data = result.json()
         template = 'Завтра в городе {} температура {}°, {}.'
