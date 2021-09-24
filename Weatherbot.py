@@ -18,13 +18,10 @@ except FileNotFoundError:
     data = {
         'states': {},
         MAIN_STATE: {
-
         },
         CITY_STATE: {
-
         },
         WEATHER_DATE_STATE: {
-            # id: city
         },
     }
 
@@ -109,7 +106,7 @@ def weather_date(message):
     if message.text == 'сегодня':
         result = requests.get(api_url, params=params)
         data = result.json()
-        template = 'Сегодня в городе {} температура {}°, {}.'
+        template = 'Сегодня в городе {} температура {}°C, {}.'
         pogoda = template.format(city_name, data['list'][0]['main']['temp'], data['list'][0]['weather'][0]['description'])
         bot.send_message(user_id, pogoda)
         change_data('states', user_id, MAIN_STATE)
@@ -117,7 +114,7 @@ def weather_date(message):
     elif message.text == 'завтра':
         result = requests.get(api_url, params=params)
         data = result.json()
-        template = 'Завтра в городе {} температура {}°, {}.'
+        template = 'Завтра в городе {} температура {}°C, {}.'
         pogoda = template.format(city_name, data['list'][8]['main']['temp'], data['list'][8]['weather'][0]['description'])
         bot.send_message(user_id, pogoda)
         change_data('states', user_id, MAIN_STATE)
