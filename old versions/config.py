@@ -1,2 +1,0 @@
-token = '1862518364:AAGU26jKgk75lj_IMlFpWZP9r4g0IMtZ0dM' # weather
-# token = '1969776181:AAEHPMFBEbVdj3fTDYGt4vUE9QXzLyOAjps' # spam
