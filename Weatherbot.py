@@ -2,7 +2,9 @@ import telebot
 from telebot import types
 import json
 import os
+import requests
 
+OWM_API_key = os.environ['OWM_API_key']
 token = os.environ['TELEGRAM_TOKEN']
 bot = telebot.TeleBot(token)
 
@@ -25,6 +27,9 @@ except FileNotFoundError:
             # id: city
         },
     }
+
+# city_name = 'Tver'
+# print(city_name)
 
 
 def change_data(key, user_id, value):
@@ -80,6 +85,8 @@ def main_handler(message):
 def city_handler(message):
     user_id = str(message.from_user.id)
     if message.text.lower() in ['мск', 'спб']:
+        global city_name
+        city_name = ""
         change_data(WEATHER_DATE_STATE, user_id, message.text.lower())
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(
@@ -87,6 +94,13 @@ def city_handler(message):
         )
         bot.send_message(user_id, 'А какая дата? введи "сегодня" или "завтра"', reply_markup=markup)
         change_data('states', user_id, WEATHER_DATE_STATE)
+        if message.text.lower() == 'мск':
+            city_name = 'Москва'
+            print(city_name)
+        elif message.text.lower() == 'спб':
+            city_name = 'Санкт-Петербург'
+            print(city_name)
+        return city_name
     else:
         bot.reply_to(message, 'Я тебя не понял')
 
@@ -104,19 +118,38 @@ WEATHER = {
 
 
 def weather_date(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton('Погода'))
     user_id = str(message.from_user.id)
-    city = data[WEATHER_DATE_STATE][user_id]
+    api_url = "https://api.openweathermap.org/data/2.5/forecast"
+    params = {
+        'q': city_name,
+        'appid': '8452be5e1d06e33f15820d907ebe6a06',
+        'units': 'metric',
+        'lang': 'ru'
+    }
     if message.text == 'сегодня':
-        bot.send_message(user_id, WEATHER[city][message.text.lower()])
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add(types.KeyboardButton('Погода'))
+        print(city_name)
+        result = requests.get(api_url, params=params)
+        data = result.json()
+        template = 'Сегодня в городе {} температура {}°, {}.'
+        pogoda = template.format(city_name, data['list'][0]['main']['temp'], data['list'][0]['weather'][0]['description'])
+        bot.send_message(user_id, pogoda)
         change_data('states', user_id, MAIN_STATE)
 
     elif message.text == 'завтра':
-        bot.send_message(user_id, WEATHER[city][message.text.lower()])
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add(types.KeyboardButton('Погода'))
+        print(city_name)
+        result = requests.get(api_url, params=params)
+        data = result.json()
+        template = 'Завтра в городе {} температура {}°, {}.'
+        pogoda = template.format(city_name, data['list'][8]['main']['temp'], data['list'][8]['weather'][0]['description'])
+        bot.send_message(user_id, pogoda)
         change_data('states', user_id, MAIN_STATE)
 
-    elif message.text.lower() == 'Назад':
-        bot.send_message(user_id, 'Вернулся назад')
-        change_data('states', user_id, MAIN_STATE)
 
     else:
         bot.reply_to(message, "Я тебя не понял")
